@@ -1,5 +1,6 @@
 ---
 title: "Scripts, variables, and loops"
+slug: dirac-bash-writing-scripts-scripts-variables-loops
 teaching: 45
 exercises: 10
 questions:
