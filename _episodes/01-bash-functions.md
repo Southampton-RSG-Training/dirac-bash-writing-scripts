@@ -85,32 +85,194 @@ Using the following command we will make a script to work on some functions. The
 touch my_functions.sh
 chmod +x my_functions.sh
 ```
-{: .languaage-bash}
+{: .language-bash}
 
-You can then edit this script in which ever text editor we choose. For the sake of consistency I will use Nano
+You can then edit this script in which ever text editor we choose. For the sake of consistency let's use Nano
 ```
 nano my_functions.sh
 ```
-{: .languaage-bash}
+{: .language-bash}
 
 Let's start by using the following script that checks the time 100 times but only prints it if the seconds are a 
 multiple of 3:
 
 ```
 #!/bin/bash
-for 
+
+# Start a loop 
+while [ $i -le 100 ]
 do
+   # get the time
    time_var=$(date "+%H:%M:%S")
-   readarray -d : -t time_arr <<< "$time_var"
-   if time_arr
+   # split the time into hours, miniutes, and seconds
+   IFS=':' read -ra time_arr <<< "$time_var"
+   # use the moduli operator to check if the number is divisible by 3
+   if ((${time_arr[2]} % 3 == 0));
+   then
+      # if the number of seconds is divisible by 3 then print the time to console
+      echo $time_var
+   fi
+   # if wait one second
+   sleep 1
+   ((i++))
 done
 ```
-{: .languaage-bash}
+{: .language-bash}
+
+This script has many lines and a decent amount of complexity so we may want to break it down additionally, the script 
+is inflexible. We can use functions to address both these points. And along the way we will learn about the way 
+functions return data and how to instruct a function to have different behaviours.
+
+## How can I use the result of my function?
+
+Let's start by considering a function that reads the current time and returns the time array, the first four lines of 
+the while loop.
+```
+function get_time_arr {
+   # get the time
+   time_var=$(date "+%H:%M:%S")
+   # split the time into hours, miniutes, and seconds
+   IFS=':' read -ra time_arr <<< "$time_var"
+   echo ${time_arr[@]}
+}
+```
+{: .language-bash}
+
+If you have experience with other programing languages then you may be hesitant about the way this function looks. Most 
+languages have some kind of return to end a function and return the result. However, in bash the return is only used to 
+return the status of the function, a 0 indicates success and anything else indicates failure. To check the status of the
+last run function one can use a special variable ```$?```. To get the result of this function we are using 
+'command substitution' the final line of the function prints the result of the function which can then be collected. 
+
+Let's take an aside to look at this behaviour. 
+
+Copy and paste the above function to the terminal then run.
+
+```
+get_time_arr
+
+echo $?
+```
+{: .language-bash}
+
+The function prints the time then the function result which should be ```0```. But this isn't particularly useful we 
+want to be able to collect and use the output. To do this we collect the output of the function in a variable.
+
+```
+time_arr=$( get_time_arr )
+echo $?
+echo $time_arr
+```
+{: .language-bash}
+
+Here we have assigned the output to the variable ```time_arr``` then printed it at our convince. We will look at other
+ways of returning variables later.
+
+For now lets get back to our script and replace the first few lines with the function we just wrote.
+
+```
+#!/bin/bash
+
+# Define a function to get a time and split it into an array
+function get_time_arr {
+   # get the time
+   time_var=$(date "+%H:%M:%S")
+   # split the time into hours, miniutes, and seconds
+   IFS=':' read -ra time_arr <<< "$time_var"
+   # return the array
+   echo $time_arr
+}
+
+# Start a loop 
+while [ $i -le 100 ]
+do
+   # Run the funtion to get the current time as an array are assign the result to time_arr
+   time_arr=$( get_time_arr )
+   
+   # use the moduli operator to check if the number is divisible by 3
+   if ((${time_arr[2]} % 3 == 0));
+   then
+      # if the number of seconds is divisible by 3 then print the time to console
+      echo ${time_arr[@]}
+   fi
+   # if wait one second
+   sleep 1
+   ((i++))
+done
+```
+{: .language-bash}
+
+Unfortunately, before we had access to the variables ```time_var``` and ```time_arr``` but now we only have 
+```time_arr``` as using 'command substitution' we can only return a single argument now we will upgrade the 
+```get_time_array``` to be able to return multiple values.
+
+```
+#!/bin/bash
+
+# Define a function to get a time and split it into an array
+function get_time_vars {
+   # make local variables to hold results and assign them to inputs
+   local time_var=$1
+   local time_arr=$2
+   
+   # get the time
+   time_var=$(date "+%H:%M:%S")
+   # split the time into hours, miniutes, and seconds
+   IFS=':' read -ra time_arr <<< "$time_var"
+}
+```
+{: .language-bash}
+
+To use the function above we need to pass it two variables that will then be used to store the results
+
+```
+get_time_vars time_var time_arr
+# check the return status of the function
+echo $?
+# print the variables to the console
+echo $time_var
+echo $time_arr
+```
+{: .language-bash}
+
+We can use this updated function to restructure our script like so:
+
+```
+#!/bin/bash
+
+function get_time_vars {
+   # make local variables to hold results and assign them to inputs
+   local time_var=$1
+   local time_arr=$2
+   
+   # get the time
+   time_var=$(date "+%H:%M:%S")
+   # split the time into hours, miniutes, and seconds
+   IFS=':' read -ra time_arr <<< "$time_var"
+}
+
+
+# Start a loop 
+while [ $i -le 100 ]
+do
+   # Run the funtion to get the current time as an array are assign the result to time_arr
+   get_time_vars time_var time_arr 
+   
+   # use the moduli operator to check if the number is divisible by 3
+   if ((${time_arr[2]} % 3 == 0));
+   then
+      # if the number of seconds is divisible by 3 then print the time to console
+      echo $time_var
+   fi
+   # if wait one second
+   sleep 1
+   ((i++))
+done
+```
+{: .language-bash}
 
 
 ## How can I tell my function what do?
-
-## How can I use the result of my function?
 
 ## What can I do with a function now?
 
