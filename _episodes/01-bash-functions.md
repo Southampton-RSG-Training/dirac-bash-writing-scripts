@@ -204,17 +204,13 @@ done
 
 Unfortunately, before we had access to the variables ```time_var``` and ```time_arr``` but now we only have 
 ```time_arr``` as using 'command substitution' we can only return a single argument now we will upgrade the 
-```get_time_array``` to be able to return multiple values.
+```get_time_array``` to be able to assign multiple values.
 
 ```
 #!/bin/bash
 
 # Define a function to get a time and split it into an array
 function get_time_vars {
-   # make local variables to hold results and assign them to inputs
-   local time_var=$1
-   local time_arr=$2
-   
    # get the time
    time_var=$(date "+%H:%M:%S")
    # split the time into hours, miniutes, and seconds
@@ -223,15 +219,17 @@ function get_time_vars {
 ```
 {: .language-bash}
 
-To use the function above we need to pass it two variables that will then be used to store the results
+To use the function above we need to use two variables that will store the results
 
 ```
-get_time_vars time_var time_arr
+time_var='time_var'
+time_arr='time_arr'
+get_time_vars
 # check the return status of the function
 echo $?
 # print the variables to the console
 echo $time_var
-echo $time_arr
+echo ${time_arr[*]}
 ```
 {: .language-bash}
 
@@ -241,37 +239,121 @@ We can use this updated function to restructure our script like so:
 #!/bin/bash
 
 function get_time_vars {
-   # make local variables to hold results and assign them to inputs
-   local time_var=$1
-   local time_arr=$2
-   
    # get the time
    time_var=$(date "+%H:%M:%S")
-   # split the time into hours, miniutes, and seconds
+   # split the time into hours, miniutes, and seconds 
    IFS=':' read -ra time_arr <<< "$time_var"
 }
 
-
+# Initilise some variables
+i=0
+time_var='time_var'
+time_arr='time_arr'
 # Start a loop 
-while [ $i -le 100 ]
-do
-   # Run the funtion to get the current time as an array are assign the result to time_arr
-   get_time_vars time_var time_arr 
-   
-   # use the moduli operator to check if the number is divisible by 3
-   if ((${time_arr[2]} % 3 == 0));
-   then
-      # if the number of seconds is divisible by 3 then print the time to console
+while [[ $i -le 100 ]]; do
+   # Run the funtion to get the current time as an array
+   get_time_vars  
+   # use the moduli operator to check if the number is divisible by 3 n.b. we are using '10#' to let bash know seconds '01, 02, 03...' are in base 10
+   seconds=10#${time_arr[2]}
+   floor_val=$(( seconds % 3 ))
+   # if the number of seconds is divisible by 3 then print the time to console
+   if [ $floor_val -eq 0 ]; then
       echo $time_var
    fi
    # if wait one second
    sleep 1
-   ((i++))
+   (( i++ ))
 done
 ```
 {: .language-bash}
 
+We should note here that we don't return the variables from the function we let the function edit global variables this
+means the function is less useful than it could be as we have to know the names of the variables beforehand. But it is 
+necessary for returning more than one variable (where one of the variables isn't a status code). The above function is 
+also dangerous, it can edit variables without the user being aware. This concept is called variable scope and its worth 
+investigating in more detail.
 
+Let's consider a simple example, run the three following codes and predict the outcome of each before you do:
+
+Firstly we assign and read out two variables.
+
+> ```
+> var_a = 'I am global var_a'
+> var_b = 'I am global var_b'
+>
+> echo $var_a
+> echo $var_b
+> ```
+> {: .language-bash}
+>
+> ```
+> ```
+> {: .solution}
+
+
+> Now we introduce a function like the one above that uses these variable names, what should happen now?
+
+> ```
+> function i_break_things {
+> var_a = 'I am var_a inside a function'
+> var_b = 'I am var_b inside a function'
+> echo $var_a
+> echo $var_b
+> }
+>
+> var_a = 'I am global var_a'
+> var_b = 'I am global var_b'
+> 
+> echo $var_a
+> echo $var_b
+>
+> i_break_things
+>
+> echo $var_a
+> echo $var_b
+> ```
+> {: .language-bash}
+>
+> > ```
+> > ```
+> > {: .output}
+> >
+> > The function has updated the variables in this example and the function we created above it seems intentional but 
+> > what if your code contained hundreds of lines or the function got included in a path there would be no way to 
+> > predict what any given output should be!
+> {: .solution}
+> 
+> This time we add the local keyword to `var_b`. Have a guess how this might change the result...
+>
+> ```
+> function i_break_fewer_things {
+> var_a = 'I am var_a inside a function'
+> local var_b = 'I am local var_b'
+> echo $var_a
+> echo $var_b
+> }
+> 
+> var_a = 'I am global var_a'
+> var_b = 'I am global var_b'
+>
+> echo $var_a
+> echo $var_b
+> 
+> i_break_fewer_things
+> 
+> echo $var_a
+> echo $var_b
+> ```
+> {: .language-bash}
+>
+> > ```
+> > ```
+> > {: .output}
+> > The inclusion of the local keyword has changed the scope of the variable `var_b` now it is local to the function
+> > and the variable outside the function is left unchanged. The words here 'global' and 'local' are the names of the 
+> > scopes. The 'global' scope is accessible from anywhere in the script including inside functions 
+> {: .solution}
+{: .challenge}
 ## How can I tell my function what do?
 
 ## What can I do with a function now?
