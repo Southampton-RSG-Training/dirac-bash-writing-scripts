@@ -29,7 +29,7 @@ function hello_world {
   echo Hello World from teh function 'hello_world'!
 }
 ```
-{: .languaage-bash}
+{: .language-bash}
 
 or with slightly different syntax,
 ```
@@ -48,7 +48,7 @@ Hello World from teh function 'hello_world'!
 ```
 {: .output}
 
-You may note that this is quite similar to some other commands we have been using in the terminal like ```pwd``` or 
+You may note that this is quite similar to running other commands we have been using in the terminal like ```pwd``` or 
 ```ls```. These are both functions that have been predefined for us because they are useful tools that we are likely to
 want to use multiple times.
 
@@ -112,7 +112,7 @@ do
       # if the number of seconds is divisible by 3 then print the time to console
       echo $time_var
    fi
-   # if wait one second
+   # wait one second
    sleep 1
    ((i++))
 done
@@ -195,7 +195,7 @@ do
       # if the number of seconds is divisible by 3 then print the time to console
       echo ${time_arr[@]}
    fi
-   # if wait one second
+   # wait one second
    sleep 1
    ((i++))
 done
@@ -260,7 +260,7 @@ while [[ $i -le 100 ]]; do
    if [ $floor_val -eq 0 ]; then
       echo $time_var
    fi
-   # if wait one second
+   # wait one second
    sleep 1
    (( i++ ))
 done
@@ -287,12 +287,12 @@ Firstly we assign and read out two variables.
 > {: .language-bash}
 >
 > ```
+> I am global var_a
+> I am global var_b
 > ```
-> {: .solution}
-
-
-> Now we introduce a function like the one above that uses these variable names, what should happen now?
-
+> {: .output}
+>
+> Now we introduce a function like the one above that uses these variable names, what should the output be now?
 > ```
 > function i_break_things {
 > var_a = 'I am var_a inside a function'
@@ -315,6 +315,12 @@ Firstly we assign and read out two variables.
 > {: .language-bash}
 >
 > > ```
+> > I am global var_a
+> > I am global var_b
+> > I am var_a inside a function
+> > I am var_b inside a function
+> > I am var_a inside a function
+> > I am var_b inside a function
 > > ```
 > > {: .output}
 > >
@@ -347,14 +353,162 @@ Firstly we assign and read out two variables.
 > {: .language-bash}
 >
 > > ```
+> > I am global var_a
+> > I am global var_b
+> > I am var_a inside a function
+> > I am local var_b
+> > I am var_a inside a function
+> > I am global var_b
 > > ```
 > > {: .output}
+> >
 > > The inclusion of the local keyword has changed the scope of the variable `var_b` now it is local to the function
 > > and the variable outside the function is left unchanged. The words here 'global' and 'local' are the names of the 
 > > scopes. The 'global' scope is accessible from anywhere in the script including inside functions 
 > {: .solution}
+> 
 {: .challenge}
+
 ## How can I tell my function what do?
 
+Let's gert back to our script. The stages are currently:
+- Initilise variables
+- Start a loop
+  - Use our function 'get_time_vars' to query the time and date and assign them to the global variables time_var and time_arr
+  - Check if the number of seconds is divisible by three.
+    - true: print the date and time
+    - false: do nothing
+  - sleep for one second
+
+```
+#!/bin/bash
+
+function get_time_vars {
+   # get the time
+   time_var=$(date "+%H:%M:%S")
+   # split the time into hours, miniutes, and seconds 
+   IFS=':' read -ra time_arr <<< "$time_var"
+}
+
+# Initilise some variables
+i=0
+time_var='time_var'
+time_arr='time_arr'
+# Start a loop 
+while [[ $i -le 100 ]]; do
+   # Run the funtion to get the current time as an array
+   get_time_vars  
+   # use the moduli operator to check if the number is divisible by 3 n.b. we are using '10#' to let bash know seconds '01, 02, 03...' are in base 10
+   seconds=10#${time_arr[2]}
+   floor_val=$(( seconds % 3 ))
+   # if the number of seconds is divisible by 3 then print the time to console
+   if [ $floor_val -eq 0 ]; then
+      echo $time_var
+   fi
+   # wait one second
+   sleep 1
+   (( i++ ))
+done
+```
+{: .language-bash}
+
+> We may want to change the divisor so that it prints on multiples of five, make this change now.
+> 
+> > We need to change the line:
+> > ```
+> > floor_val=$(( seconds % 3 ))
+> > ```
+> > {: .language-bash}
+> > 
+> > to this:
+> > ```
+> > floor_val=$(( seconds % 5 ))
+> > ```
+> > {: .language-bash}
+> > 
+> {: .solution}
+> 
+> Now we want to print on multiples of seven, make this change now.
+>
+> > We need to change the line:
+> > ```
+> > floor_val=$(( seconds % 5 ))
+> > ```
+> > {: .language-bash}
+> >
+> > to this:
+> > ```
+> > floor_val=$(( seconds % 7 ))
+> > ```
+> > {: .language-bash}
+> >
+> {: .solution}
+> 
+{: .challange}
+
+We can see that working this way to change something simple a user is required to edit a line in the middle of the code
+lets move floor operation to the function and pass it a variable instead.
+
+```
+#!/bin/bash
+
+function get_time_vars {
+   # get the time
+   time_var=$(date "+%H:%M:%S")
+   # split the time into hours, miniutes, and seconds 
+   IFS=':' read -ra time_arr <<< "$time_var"
+}
+
+function check_multiple {
+   #  we use '10#' to let bash know seconds '01, 02, 03...' are in base 10
+   local seconds=10#${time_arr[2]}
+   # use the moduli operator to check if the number is divisible by 3 n.b. 
+   local floor_val=$(( seconds % $1 ))
+   echo $floor_val
+}
+
+# Initilise some variables
+divisor=5
+i=0
+time_var='time_var'
+time_arr='time_arr'
+# Start a loop 
+while [[ $i -le 100 ]]; do
+   # Run the funtion to get the current time as an array
+   get_time_vars  
+   # check if the number is a multiple of divisor
+   do_i_print=$( check_multiple $divisor )
+   
+   # if the number was a multiple then print the time to console
+   if [ $do_i_print -eq 0 ]; then
+      echo $time_var
+   fi
+   
+   # wait one second
+   sleep 1
+   (( i++ ))
+done
+```
+
+>
+> The changes made to the script have a few advantages:
+> - It allows a variable to be set and used by the new function check_multiple, how is it different to our scoped variables, why might this be better in this instance?
+> > The variable `divisor` is passed to the function and accessed using `$1`, as we haven't used a variable in the global 
+> > scope we could use this to set two divisor variables and use them without needing to change anything. More on this later...
+> >
+> {: .solution}
+> 
+> - How has the code been made more readable?
+> > Defining the variable seconds as a number in base 10 was only necessary because we wanted to use the moduli operator
+> > we can move it into the function and give it a local scope so that it de-clutters the while loop making the loop 
+> > appear simpler and more closely follow the steps we defined earlier.
+> >
+> {: .solution}
+> 
+{: .challange}
+
+
 ## What can I do with a function now?
+
+
 
