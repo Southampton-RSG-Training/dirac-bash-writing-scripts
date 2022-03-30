@@ -508,7 +508,169 @@ done
 {: .challange}
 
 
+
 ## What can I do with a function now?
 
+We've shown, how a function is defined, where and why functions are written, how to use the result of a function, the
+affect of variable scope, and how to pass variables to a function. There is a common coding challenge called fizzbuzz, 
+where numbers are looped over and printed unless if the number is a multiple of 3 fizz is printed, if it is a multiple 
+of 5 buzz is printed, and if it is a multiple of both fizzbuzz is printed. The pseudocode logic for this is like this:
+
+- Loop over integers i from 1 to n
+  - check if i is a multiple of 3 assign result to a
+  - check if i is a multiple of 5 assign result to b
+  - check if a and b are both true
+    - if true: 
+      - print fizzbuzz
+    - if false:
+      - check if a is true:
+        - if true: print fizz
+      - else check if b is true:
+        - if true: print buzz
+      - else:
+        - print i
+
+We will make one alteration that the user calling the function fizzbuzz should be able to specify the two numbers and 
+number at which to stop.
+
+If you want a stretch challenge try to write this from scratch now using functions where possible to simplify the 
+script. Otherwise, just reveal the answer and move onto the next question.
 
 
+> ```
+> function check_multiple {
+>    # use the moduli operator to check if the first argument is a multiple of the second 
+>    local floor_val=$(( $1 % $2 ))
+>    echo $floor_val
+> }
+>
+> function fizzbuzz {
+> # this function takes three arguments in the following order, divisor a, divisor b, stop
+> i = 1
+> # loop while i is less than the 3rd argument
+> while [[ $i -le $3 ]]; do
+>   # check if i is a multiple of the first and second argument
+>   a = $( check_multiple $i $1 )
+>   b = $( check_multiple $i $2 )
+>   
+>   # add a and b (if both are zero then fum is zero and thats a fizzbuzz)
+>   a_and_b = $(( $a + $b ))
+>   
+>   # Check the multiple output being careful to use else correctly so to not print the number if it is a multiple.
+>   if [ $a_and_b -eq 0 ]; then
+>       echo fizzbuzz
+>   else
+>     if [ $b -eq 0 ]; then
+>       echo fizz
+>     elif [ $a -eq 0 ]; then
+>       echo buzz
+>     else
+>       echo $i
+>     fi
+>   fi
+>   # increment i
+>   (( i ++ ))
+> done
+> }
+>
+> # run classic fizzbuzz to 100
+> fizzbuzz 3 5 100
+> ```
+> 
+> We've created the function fizzbuzz that takes three arguments that define the two number to check for multiples of 
+> and the number to stop at. The function check_multiple uses command substitution to return the moduli of the current 
+> loop value, by letting this function take arguments we can avoid writing separate functions for each input to check.
+> 
+{: .solution}
+
+Now you have seen the way functions can be used in bash try these exorcises to apply what you have learnt.
+
+>
+> Thinking about the script that prints the time when seconds are a multiple of three and fizzbuzz example above write 
+> some pseudocode for a function that prints the time (not more than once a second) 100 times unless the seconds are a 
+> multiple of one or both of the two input values, in which case it should print fizz, buzz or fizzbuzz for both.
+>
+> > - Loop over the values 1 to 100
+> >   - Get the time, strip the seconds
+> >   - Check if time is a multiple of either of the inputs (call them a and b)
+> >   - Multiple of both?
+> >     - true
+> >       - print fizzbuzz
+> >     - false
+> >       - multiple of a
+> >         - true
+> >           - print fizz
+> >         - false
+> >           - multiple of b
+> >             - print buzz
+> >          - false
+> >             - print time
+> >
+> {: .solution}
+>
+> Turn your pseudocode into an actual function that uses the time to play fizzbuzz.
+> 
+> ```
+> #!/bin/bash
+>
+> # Global variables for function returns
+> time_var='time_var'
+> time_arr='time_arr'
+> 
+> function get_time_vars {
+>   # get the time
+>   time_var=$(date "+%H:%M:%S")
+>   # split the time into hours, miniutes, and seconds
+>   IFS=':' read -ra time_arr <<< "$time_var"
+> }
+>
+> function check_multiple {
+>   #  we use '10#' to let bash know seconds '01, 02, 03...' are in base 10
+>   local seconds=10#${time_arr[2]}
+>   # use the moduli operator to check if the number is divisible by 3 n.b.
+>   local floor_val=$(( seconds % $1 ))
+>   echo $floor_val
+> }
+>
+> function date_fizzbuzz {
+>   # this function takes three arguments in the following order, divisor a, divisor b
+>   local i=0
+>   while [[ $i -le 100 ]]; do
+>     # Run the funtion to get the current time as an array
+>     get_time_vars
+> 
+>     # check if the number is a multiple of divisor
+>     res_a=$( check_multiple $1 )
+>     res_b=$( check_multiple $2 )
+>     # add to combine both, using moduli zero is true so if sum is 0 then both were 0
+>     res_ab=$(( $res_a + $res_b ))
+>     
+> 
+>     if [ $res_ab -eq 0 ]; then
+>       echo fizzbuzz
+>     else
+>       if [ $res_a -eq 0 ]; then
+>         echo fizz
+>       elif [ $res_b -eq 0 ]; then
+>         echo buzz
+>       else
+>         echo $time_var
+>       fi
+>     fi
+>
+>     # wait one second
+>     sleep 1
+>     (( i++ ))
+>   done
+> }
+> 
+> # Run the function with classic fizzbuzz multiples
+> date_fizzbuzz 3 5
+> ```
+> {: .solution}
+> 
+{: .challange}
+
+That's all we have to say about bash functions for now. This isn't an extensive tutorial, but it should give you a 
+*functional* understanding of how they work. If you want more practice working on functions try modifying the 
+date_fizzbuzz to do other more interesting things.
