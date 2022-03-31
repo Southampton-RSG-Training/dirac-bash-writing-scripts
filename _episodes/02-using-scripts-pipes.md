@@ -61,7 +61,7 @@ done
 ~~~
 {: .language-bash}
 
-What this script will do is continually read input using `read` until there is none left. For each line of input, we use `echo` and `grep` within a pipe to only filter out and only print any output that has `0` as the last character. The `$` in the `grep` search string means match on end of line, hence `0$` means match any string that ends with `0`.
+What this script will do is continually read input using `read` until there is none left, at which point the script ends. For each line of input, we use `echo` and `grep` within a pipe to only filter out and only print any output that has `0` as the last character. The `$` in the `grep` search string means match on end of line, hence `0$` means match any string that ends with `0`.
 
 Then set its execute permissions, and execute it within a pipe like so:
 
@@ -78,3 +78,20 @@ $ ./my_functions.sh | ./filter.sh | head -n 2
 {: .output}
 
 Note that this pattern is quite a common one with the Bash shell: we're running a program that gives us potentially a lot of output, and we're filtering out just what we're interested in.
+
+> ## Simple is Good
+> 
+> Wherever possible, we should always try to simplify the code we write, removing any extraneous use of scripts or code that isn't needed. This enhances readability and makes our code easier to understand.
+> 
+> We've written a script that filters out output that ends in `0`. Instead of using `./filter.sh` in our pipe, what could we replace it with that would accomplish the same thing?
+> 
+> > ## Solution
+> > 
+> > ~~~
+> > $ ./my_functions.sh | grep "0$" | head -n 2
+> > ~~~
+> > {: .language-bash}
+> > 
+> > By using the `grep` directly in the pipe, we've removed the need for a separate script, simplifying the pipe.
+> {: .solution}
+{: .challenge}
