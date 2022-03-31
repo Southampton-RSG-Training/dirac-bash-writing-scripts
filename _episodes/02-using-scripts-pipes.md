@@ -32,7 +32,7 @@ This simple idea is why systems like Unix - and its successors like Linux - have
 So taking our `my_functions.sh` script, we can use it in a pipe as we would any other command:
 
 ~~~
-$ my_functions.sh | head -10
+$ ./my_functions.sh | head -10
 ~~~
 {: .language-bash}
 
