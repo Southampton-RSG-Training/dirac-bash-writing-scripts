@@ -6,7 +6,7 @@ exercises: 10
 questions:
 - "Can I use scripts I write in pipes as well?"
 objectives:
-- "Use a Bash script we creat within a pipe."
+- "Use a Bash script we've written within a pipe."
 - "Create a Bash script that reads input from other commands within a pipe."
 keypoints:
 - "You can include your own Bash scripts in pipes."
