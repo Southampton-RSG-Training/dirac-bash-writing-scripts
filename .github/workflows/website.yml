@@ -2,121 +2,81 @@ name: Website
 on:
   push:
     branches:
-      - gh-pages
-      - main
-  pull_request: []
+      - "main"
+  pull_request: null
 jobs:
-  build-website:
-    if: ${{ !endsWith(github.repository, '/styles') }}
-    runs-on: ubuntu-20.04
+  build-setup:
+    runs-on: ubuntu-latest
     env:
-      RSPM: "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"
-      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-    defaults:
-      run:
-        shell: bash
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '2.7'
-          bundler-cache: true
+      - name: Checkout the lesson
+        uses: actions/checkout@v2
+
+      - name: Setup Git
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
 
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: '3.x'
 
-      - name: Install GitHub Pages, Bundler, and kramdown gems
-        run: |
-          gem install github-pages bundler kramdown kramdown-parser-gfm
-
       - name: Install Python modules
         run: |
           python3 -m pip install --upgrade pip setuptools wheel pyyaml==5.3.1 requests
+          python3 -m pip install -r requirements.txt
 
-      - name: Checkout the lesson
-        uses: actions/checkout@master
-        with:
-          fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Look for R-markdown files
-        id: check-rmd
+      - name: Run get setup and make favicons
         run: |
-          echo "::set-output name=count::$(shopt -s nullglob; files=($(find . -iname '*.Rmd')); echo ${#files[@]})"
+          python bin/get_setup.py
+          python bin/make_favicons.py
 
-      - name: Set up R
-        if: steps.check-rmd.outputs.count != 0
-        uses: r-lib/actions/setup-r@master
+      - name: Check for Rmd
+        id: check_files
+        uses: andstor/file-existence-action@v1
+        with:
+          files: "./_episodes_rmd"
+
+      - name: Setup Pandoc
+        if: steps.check_files.outputs.files_exists == 'true'
+        uses: r-lib/actions/setup-pandoc@v1
+
+      - name: Setup R
+        if: steps.check_files.outputs.files_exists == 'true'
+        uses: r-lib/actions/setup-r@v1
         with:
           r-version: 'release'
 
-      - name: Restore R Cache
-        if: steps.check-rmd.outputs.count != 0
-        uses: actions/cache@v2
+      - name: Install sys deps
+        run: sudo apt-get install -y libcurl4-openssl-dev
+
+      - name: Setup Renv
+        if: steps.check_files.outputs.files_exists == 'true'
+        uses: r-lib/actions/setup-renv@v2
+
+      # This task:
+      # 1: Finds the file paths for all RMarkdown scripts
+      # 2: Runs the RScript command to knit each R script, specifying the md collection as the destination
+      #   - See r-novice_setup.R in each R directory to see the custom modifications we make to the knitting process
+      # 3: Use a perl regex to reformat SWC commands, the knit process misplaces them
+      # 4: Use a perl regex to find specific challenge tags
+      # 5: Add the episodes in the markdown folder
+      # 6: Commit the changes to be added to the GH pages episode later
+      - name: Render R markdown
+        if: steps.check_files.outputs.files_exists == 'true'
+        run: |
+          RMD_PATH=$(find ./_episodes_rmd -name '*.Rmd')
+          Rscript -e 'for (f in commandArgs(TRUE)) if (file.exists(f)) rmarkdown::render(f, knit_root_dir=getwd(), output_dir=dirname(sub("./_episodes_rmd/", "./_episodes/", f)))' ${RMD_PATH[*]}
+          perl -pi -e "s/([>\s]*)(>\s)(.*?)(\{: \.[a-zA-Z]+\})/\1\2\3\n\1\4\n\1/g" ./_episodes/*.md
+          perl -0777pi -e "s/(?<!\n){: .challenge}/\n{: .challenge}/g" ./_episodes/*.md
+          git add ./_episodes/*.md
+          git commit ./_episodes/*.md -m 'Re-build Rmarkdown files' || echo "No changes to commit"
+
+      - name: Deploy the website to gh-pages
+        uses: JamesIves/github-pages-deploy-action@4.1.7
         with:
-          path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-${{ hashFiles('.github/depends.Rds') }}
-          restore-keys: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-
-
-      - name: Install needed packages
-        if: steps.check-rmd.outputs.count != 0
-        run: |
-          source('bin/dependencies.R')
-          install_required_packages()
-        shell: Rscript {0}
-
-      - name: Query dependencies
-        if: steps.check-rmd.outputs.count != 0
-        run: |
-          source('bin/dependencies.R')
-          deps <- identify_dependencies()
-          create_description(deps)
-          use_bioc_repos()
-          saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
-          writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
-        shell: Rscript {0}
-
-
-      - name: Install system dependencies for R packages
-        if: steps.check-rmd.outputs.count != 0
-        run: |
-          while read -r cmd
-          do
-            eval sudo $cmd || echo "Nothing to update"
-          done < <(Rscript -e 'cat(remotes::system_requirements("ubuntu", "20.04"), sep = "\n")')
-
-      - name: Render the markdown and confirm that the site can be built
-        run: make site
-
-      - name: Checkout github pages
-        if: ${{ github.event_name == 'push' && steps.check-rmd.outputs.count != 0 && github.ref != 'refs/heads/gh-pages'}}
-        uses: actions/checkout@master
-        with:
-          ref: gh-pages
-          path: gh-pages
-
-      - name: Commit and Push
-        if: ${{ github.event_name == 'push' && steps.check-rmd.outputs.count != 0 && github.ref != 'refs/heads/gh-pages'}}
-        run: |
-          # clean up gh-pages
-          cd gh-pages
-          git rm -rf .           # remove all previous files
-          git restore --staged . # remove things from the stage
-          cd ..
-          # copy everything into gh-pages site
-          cp -r `ls -A | grep -v 'gh-pages' | grep -v '.git' | grep -v '.bundle/' | grep -v '_site'` gh-pages
-          # move into gh-pages, add, commit, and push
-          cd gh-pages
-          # setup git
-          git config --local user.email "actions@github.com"
-          git config --local user.name "GitHub Actions"
-          git add -A .
-          git commit --allow-empty -m "[Github Actions] render website (via ${{ github.sha }})"
-          git push origin gh-pages
-          # return
-          cd ..
-
-      - run: make lesson-check-all
-        if: always()
+          branch: gh-pages
+          folder: "."
+          token: ${{ secrets.GITHUB_TOKEN }}
