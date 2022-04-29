@@ -425,7 +425,9 @@ gene_association.fb.gz
 > >
 > > The "for" line could be modified to be `for FILE in *_1.fastq` to achieve
 > > the second aim.
-> {: .solution}
+> 
+{: .solution}
+
 {: .challenge}
 
 > ## Concatenating variables
@@ -442,7 +444,9 @@ gene_association.fb.gz
 > ```
 > stuff.txt.example
 > ```
-> {: .output}
+> 
+{: .output}
+
 >
 > Can you write a script that prints off the name of every file in a directory
 > with ".processed" added to it?
@@ -475,7 +479,9 @@ gene_association.fb.gz
 > > {: .language-bash}
 > >
 > > but this will have the side-effect of listing hidden files too.
-> {: .solution}
+> 
+{: .solution}
+
 {: .challenge}
 
 
@@ -512,5 +518,7 @@ gene_association.fb.gz
 > > We want all permissions so: 4 (read) + 2 (write) + 1 (execute) = 7 for user
 > > (first position), no permissions, i.e. 0, for group (second position) and
 > > all (third position).
-> {: .solution}
+> 
+{: .solution}
+
 {: .challenge}

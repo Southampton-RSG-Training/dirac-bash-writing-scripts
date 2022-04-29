@@ -287,7 +287,9 @@ Let's consider a simple example, run the three following codes and predict the o
 > I am global var_a
 > I am global var_b
 > ```
-> {: .output}
+> 
+{: .output}
+
 >
 > Now we introduce a function like the one above that uses these variable names, what should the output be now?
 > ```
@@ -320,12 +322,16 @@ Let's consider a simple example, run the three following codes and predict the o
 > > I am var_a inside a function
 > > I am var_b inside a function
 > > ```
-> > {: .output}
+> > 
+> {: .output}
+> 
 > >
 > > The function has updated the variables in this example and the function we created above it seems intentional but
 > > what if your code contained hundreds of lines or the function got included in a path there would be no way to
 > > predict what any given output should be!
-> {: .solution}
+> 
+{: .solution}
+
 >
 > This time we add the local keyword to `var_b`. Have a guess how this might change the result...
 >
@@ -358,12 +364,16 @@ Let's consider a simple example, run the three following codes and predict the o
 > > I am var_a inside a function
 > > I am global var_b
 > > ```
-> > {: .output}
+> > 
+> {: .output}
+> 
 > >
 > > The inclusion of the local keyword has changed the scope of the variable `var_b` now it is local to the function
 > > and the variable outside the function is left unchanged. The words here 'global' and 'local' are the names of the
 > > scopes. The 'global' scope is accessible from anywhere in the script including inside functions
-> {: .solution}
+> 
+{: .solution}
+
 {: .challenge}
 
 ## How can I tell my function what do?
@@ -424,7 +434,9 @@ done
 > > ```
 > > {: .language-bash}
 > >
-> {: .solution}
+> 
+{: .solution}
+
 >
 > Now we want to print on multiples of seven. How would you make this change?
 >
@@ -441,7 +453,9 @@ done
 > > ```
 > > {: .language-bash}
 > >
-> {: .solution}
+> 
+{: .solution}
+
 >
 {: .challenge}
 
@@ -499,7 +513,9 @@ done
 > > scope we could use this to set two divisor variables and use them without needing to change anything. More on this
 > later...
 > >
-> {: .solution}
+> 
+{: .solution}
+
 >
 > But how has the code been made more readable?
 >
@@ -508,7 +524,9 @@ done
 > > we can move it into the function and give it a local scope so that it de-clutters the while loop making the loop
 > > appear simpler and more closely follow the steps we defined earlier.
 > >
-> {: .solution}
+> 
+{: .solution}
+
 >
 {: .challenge}
 
@@ -611,7 +629,9 @@ Now you have seen the way functions can be used in bash try these exorcises to a
 > >          - false
 > >             - print time
 > >
-> {: .solution}
+> 
+{: .solution}
+
 >
 > Turn your pseudocode into an actual function that uses the time to play fizzbuzz.
 >
@@ -674,7 +694,9 @@ Now you have seen the way functions can be used in bash try these exorcises to a
 > > date_fizzbuzz 3 5
 > > ```
 > > {: .language-bash}
-> {: .solution}
+> 
+{: .solution}
+
 >
 {: .challenge}
 
